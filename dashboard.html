@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>【団体戦】全コート状況</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+    <style>
+        :root { 
+            --team-bg: #1b5e20; 
+            --team-gold: #fbc02d;
+            --bg: #e8f5e9; 
+            --surface: #ffffff; 
+            --border: #a5d6a7; 
+            --text: #1f2937; 
+            --blue: #1976d2; 
+            --red: #d32f2f; 
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); padding: 15px; }
+
+        .dash-header { display: flex; justify-content: space-between; align-items: center; padding: 15px 20px; background: var(--team-bg); color: #fff; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 4px 6px rgba(0,0,0,0.2); border-bottom: 4px solid var(--team-gold); }
+        .dash-title { font-size: 1.3rem; font-weight: 900; display: flex; align-items: center; gap: 10px; }
+        .live-badge { background: var(--team-gold); color: #000; padding: 3px 10px; border-radius: 20px; font-family: 'Orbitron', sans-serif; font-size: 0.8rem; font-weight: 900; }
+
+        .grid-container { display: grid; grid-template-columns: repeat(auto-fit, minmax(350px, 1fr)); gap: 20px; }
+
+        .m-card { background: var(--surface); border: 2px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; cursor: pointer; text-decoration: none; color: inherit; box-shadow: 0 4px 10px rgba(0,0,0,0.08); overflow: hidden; transition: transform 0.2s; }
+        .m-card:hover { transform: translateY(-3px); border-color: var(--team-gold); }
+        
+        .mc-top { background: var(--team-bg); color: var(--team-gold); padding: 8px 12px; display: flex; justify-content: space-between; font-weight: bold; font-size: 0.9rem; }
+        
+        .team-battle-area { padding: 20px 15px; text-align: center; border-bottom: 2px dashed var(--border); background: #fdfdfd; }
+        .tba-names { font-size: 1.3rem; font-weight: 900; display: flex; justify-content: space-around; }
+        .tba-wins { font-family: 'Orbitron', sans-serif; font-size: 2.8rem; letter-spacing: 5px; margin-top: 5px; color: var(--text); }
+        
+        .current-match-area { padding: 15px; background: #f1f8e9; }
+        .cma-title { font-size: 0.85rem; color: var(--team-bg); font-weight: 900; text-align: center; margin-bottom: 10px; background: #c8e6c9; padding: 4px; border-radius: 4px; }
+        .cma-main { display: flex; align-items: center; justify-content: space-between; }
+        .player-names { font-size: 0.9rem; font-weight: bold; }
+        
+        .score-box { display: flex; align-items: center; background: #fff; padding: 5px 10px; border-radius: 8px; border: 1px solid var(--border); box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
+        .g-num { font-family: 'Orbitron', sans-serif; font-size: 1.8rem; font-weight: 900; width: 30px; text-align: center; }
+        .p-num { font-family: 'Orbitron', sans-serif; font-size: 1rem; font-weight: bold; color: #fff; background: #333; padding: 2px 6px; border-radius: 4px; margin-left: 5px; min-width: 24px; text-align: center;}
+        
+        .c-L { color: var(--blue); } .c-R { color: var(--red); }
+    </style>
+</head>
+<body>
+    <div class="dash-header">
+        <div class="dash-title"><span class="live-badge">LIVE</span> 団体戦 速報ダッシュボード</div>
+        <div id="d-time" style="font-size: 0.85rem; font-weight: bold; color: #e8f5e9;">--:--:-- 自動更新中</div>
+    </div>
+
+    <div class="grid-container" id="grid-wrap">
+        <div style="text-align: center; padding: 50px; grid-column: 1/-1; font-weight:bold;">データを読み込んでいます...</div>
+    </div>
+
+    <script>
+        const GAS_URL_LIVE = "https://script.google.com/macros/s/AKfycbzi-0SNXjjv5mOfuU7X6Zs5Id7fzhTHPGihZ1w-N58TE5-axZKe7AFfhxd3T7gI0VMqBw/exec";
+
+        window.onload = () => { fetchDashboard(); setInterval(fetchDashboard, 5000); };
+
+        async function fetchDashboard() {
+            try {
+                const response = await fetch(`${GAS_URL_LIVE}?all=true`);
+                const allData = await response.json();
+                renderDashboard(allData);
+                document.getElementById('d-time').textContent = new Date().toLocaleTimeString() + ' 自動更新中';
+            } catch (error) { console.error(error); }
+        }
+
+        // D/A表記に統一
+        function getDisp(l, r, fin) { 
+            const border = fin ? 6 : 3; 
+            if (l < border || r < border) return { l, r }; 
+            if (l === r) return { l: 'D', r: 'D' }; 
+            if (l > r) return { l: 'A', r: 'D' }; 
+            return { l: 'D', r: 'A' }; 
+        }
+
+        function renderDashboard(matches) {
+            const wrap = document.getElementById('grid-wrap');
+            const now = Date.now();
+            const activeMatches = matches.filter(data => data.type === 'team_match' && (now - data.lastUpdate) < 1800000); 
+
+            if (activeMatches.length === 0) { wrap.innerHTML = `<div style="text-align: center; padding: 50px; grid-column: 1/-1; font-weight:bold; color:#1b5e20;">進行中の団体戦はありません</div>`; return; }
+
+            wrap.innerHTML = activeMatches.map(data => {
+                const TS = data.TS; const S = data.S;
+                const courtName = S.meta.court === "court_1" ? "第1コート" : S.meta.court === "court_2" ? "第2コート" : S.meta.court === "court_3" ? "第3コート" : "第4コート";
+                
+                // ★修正箇所：live.html へ遷移
+                const detailUrl = `live.html?court=${S.meta.court}`;
+                const d = getDisp(S.pL, S.pR, S.isFinal);
+
+                return `
+                <a href="${detailUrl}" class="m-card">
+                    <div class="mc-top">
+                        <span>${courtName}</span>
+                        <span>${S.meta.tourney} ${S.meta.stage}</span>
+                    </div>
+                    <div class="team-battle-area">
+                        <div class="tba-names"><span class="c-L">${TS.teamL}</span> VS <span class="c-R">${TS.teamR}</span></div>
+                        <div class="tba-wins"><span class="c-L">${TS.winsL}</span> - <span class="c-R">${TS.winsR}</span></div>
+                    </div>
+                    <div class="current-match-area">
+                        <div class="cma-title">▶ 第${TS.currentMatchNum}対戦 進行中</div>
+                        <div class="cma-main">
+                            <div class="player-names c-L">${S.names.A}<br>${S.names.B}</div>
+                            <div class="score-box">
+                                <div class="g-num c-L">${S.gL}</div>
+                                <div class="p-num">${d.l}</div>
+                                <div style="margin: 0 5px; color:#ccc;">-</div>
+                                <div class="p-num">${d.r}</div>
+                                <div class="g-num c-R">${S.gR}</div>
+                            </div>
+                            <div class="player-names c-R" style="text-align:right;">${S.names.C}<br>${S.names.D}</div>
+                        </div>
+                    </div>
+                </a>`;
+            }).join('');
+        }
+    </script>
+</body>
+</html>
