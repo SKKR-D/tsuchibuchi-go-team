@@ -102,6 +102,12 @@
         .sm-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 10px; }
         .sm-btn { padding: 16px; background: var(--surface2); border: 2px solid var(--border); border-radius: 12px; font-weight: 900; text-align: center; cursor: pointer; }
         .sm-back { grid-column: span 2; padding: 10px; background: transparent; border: 1px solid var(--border); color: var(--text-dim); cursor: pointer; font-weight:bold; }
+
+        /* 合流バナー */
+        .join-banner { background: #e3f2fd; border: 2px solid #2196f3; border-radius: 8px; padding: 12px; margin-bottom: 15px; display: none; cursor: pointer; transition: 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .join-banner:active { transform: scale(0.98); }
+        .jb-title { font-weight: 900; color: #1976d2; font-size: 0.9rem; margin-bottom: 4px; display: flex; align-items: center; gap: 5px; }
+        .jb-desc { font-size: 0.75rem; color: #555; }
     </style>
 </head>
 <body>
@@ -111,6 +117,19 @@
             <div id="step-0">
                 <div style="text-align: center;"><span class="team-badge">団体戦 初期設定</span></div>
                 
+                <div id="join-banner" class="join-banner" onclick="joinOngoingMatch()">
+                    <div class="jb-title">💡 進行中の団体戦に合流</div>
+                    <div class="jb-desc" id="join-desc">土淵中 VS 盛岡一中 (通信中...)</div>
+                    <div style="font-size: 0.7rem; color: #1976d2; margin-top: 4px; text-align: right;">タップして自動入力 ➔</div>
+                </div>
+                
+                <p class="input-label">📌 入力開始マッチ <span style="font-size:0.65rem; color:var(--red);">(※2面展開時は変更)</span></p>
+                <div class="option-group" id="start-match-opts">
+                    <button class="opt-btn sel-gold" onclick="selStartMatch(1)">第1マッチ</button>
+                    <button class="opt-btn" onclick="selStartMatch(2)">第2マッチ</button>
+                    <button class="opt-btn" onclick="selStartMatch(3)">第3マッチ</button>
+                </div>
+
                 <p class="input-label">📌 大会情報</p>
                 <div style="display:flex; gap:6px; margin-bottom:10px;">
                     <input class="name-input" id="m-tourney" placeholder="大会名" style="flex:2;">
@@ -185,13 +204,13 @@
                     <button class="opt-btn sel-gold" onclick="selMatch(7)">7ゲーム</button>
                 </div>
                 
-                <p class="input-label">🎾 第1マッチ 1ゲーム目 サーバー</p>
+                <p class="input-label">🎾 最初のサーバー</p>
                 <div class="option-group" id="first-serve-opts">
                     <button class="opt-btn" onclick="selFirstServe(0)">🔵 土淵中</button>
                     <button class="opt-btn" onclick="selFirstServe(1)">🔴 相手</button>
                 </div>
                 
-                <button class="confirm-btn gold" onclick="goToStep1()">第1マッチへ進む ➔</button>
+                <button class="confirm-btn gold" id="btn-goto-step1" onclick="goToStep1()">第1マッチへ進む ➔</button>
             </div>
 
             <div id="step-1" style="display:none;">
@@ -376,6 +395,7 @@
         };
         let S = getInitialMatchState();
         let historyStack = [];
+        let fetchedOngoingMatch = null; // 合流データ保存用
 
         function getInitialMatchState() {
             return {
@@ -389,7 +409,57 @@
         }
 
         // --- STEP 0 (初期設定) ---
-        window.onload = () => { updateRoster(); }
+        window.onload = () => { 
+            updateRoster(); 
+            checkForOngoingMatch(); // 起動時に進行中の試合がないかサーバーに確認
+        }
+
+        // ★追加：開始マッチ選択機能
+        function selStartMatch(n) {
+            TS.currentMatchNum = n;
+            const btns = document.getElementById('start-match-opts').querySelectorAll('.opt-btn');
+            btns.forEach((b, i) => b.className = `opt-btn ${i === (n-1) ? 'sel-gold' : ''}`);
+            document.getElementById('btn-goto-step1').textContent = `第${n}マッチへ進む ➔`;
+        }
+
+        // ★追加：LIVEサーバーから進行中の「土淵中」の試合を探す
+        async function checkForOngoingMatch() {
+            try {
+                const res = await fetch(`${GAS_URL_LIVE}?all=true`);
+                const data = await res.json();
+                const now = Date.now();
+                
+                // 過去1時間以内で「土淵中」が左側にいる団体戦を探す
+                const ongoing = data.find(d => 
+                    d.type === 'team_match' && 
+                    d.TS.teamL === '土淵中' && 
+                    (now - d.lastUpdate) < (60 * 60 * 1000)
+                );
+
+                if (ongoing) {
+                    fetchedOngoingMatch = ongoing;
+                    const banner = document.getElementById('join-banner');
+                    const desc = document.getElementById('join-desc');
+                    desc.textContent = `土淵中 VS ${ongoing.TS.teamR} (${ongoing.TS.meta.tourney || ''})`;
+                    banner.style.display = 'block';
+                }
+            } catch (e) { console.error("合流確認エラー:", e); }
+        }
+
+        // ★追加：合流ボタンが押された時の自動入力
+        function joinOngoingMatch() {
+            if (!fetchedOngoingMatch) return;
+            const t = fetchedOngoingMatch.TS;
+            
+            // 自動入力
+            document.getElementById('m-tourney').value = t.meta.tourney || '';
+            document.getElementById('m-stage').value = t.meta.stage || '';
+            selGender(t.gender);
+            document.getElementById('m-teamR').value = t.teamR;
+            
+            alert(`「${t.teamR}」戦のデータを自動入力しました。\n担当するマッチ（第2など）を選択し、オーダーを入力して進んでください。`);
+            document.getElementById('join-banner').style.display = 'none';
+        }
 
         function selGender(g) {
             TS.gender = g;
@@ -409,7 +479,7 @@
                 document.getElementById(`o${i}-B`).innerHTML = html;
             }
             
-            // ★メイン画面（スコア入力画面）のプルダウンも更新
+            // メイン画面（スコア入力画面）のプルダウンも更新
             document.getElementById('nm-A').innerHTML = html;
             document.getElementById('nm-B').innerHTML = html;
         }
@@ -435,7 +505,7 @@
             TS.meta.court = document.getElementById('m-court').value;
             TS.meta.scorer = document.getElementById('m-scorer').value;
             
-            if (TS.firstServeTeam === null) { alert("第1マッチの最初のサーバーを選択してください。"); return; }
+            if (TS.firstServeTeam === null) { alert("最初のサーバーを選択してください。"); return; }
             
             // オーダー情報を保存
             for(let i=1; i<=3; i++) {
@@ -447,11 +517,11 @@
                 };
             }
             
-            // 第1マッチの情報をセット
-            const o1 = TS.matchOrders[0];
-            if (!o1.A || !o1.B) { alert("第1マッチの自チームの選手を選択してください。"); return; }
-            S.names.A = o1.A; S.names.B = o1.B;
-            S.names.C = o1.C || '選手C'; S.names.D = o1.D || '選手D';
+            // ★選択されたマッチの情報をセットするように変更
+            const oTarget = TS.matchOrders[TS.currentMatchNum - 1];
+            if (!oTarget.A || !oTarget.B) { alert(`第${TS.currentMatchNum}マッチの自チームの選手を選択してください。`); return; }
+            S.names.A = oTarget.A; S.names.B = oTarget.B;
+            S.names.C = oTarget.C || '選手C'; S.names.D = oTarget.D || '選手D';
             
             S.startTeam = TS.firstServeTeam;
             S.curServTeam = TS.firstServeTeam;
@@ -526,7 +596,7 @@
             if(document.getElementById('pos-match-num')) document.getElementById('pos-match-num').textContent = TS.currentMatchNum;
         }
 
-        // ★ メイン画面のプルダウン等で選手名が変更された時の処理
+        // メイン画面のプルダウン等で選手名が変更された時の処理
         function updateName(type, id, val) { 
             S.names[id] = val;
             
