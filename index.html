@@ -377,7 +377,8 @@
                 startTeam: null, curServTeam: null, sOrder: [], rOrder: [],
                 names: { A: '選手A', B: '選手B', C: '選手C', D: '選手D' },
                 stats: { A: { p:0, m:0, fi:0, st:0, pt:{}, mt:{} }, B: { p:0, m:0, fi:0, st:0, pt:{}, mt:{} }, C: { p:0, m:0, fi:0, st:0, pt:{}, mt:{} }, D: { p:0, m:0, fi:0, st:0, pt:{}, mt:{} } },
-                hist: [], log: []
+                hist: [], log: [],
+                isMatchCompleted: false // ★追加：マッチ完了フラグ
             };
         }
 
@@ -751,6 +752,9 @@
                 A: S.names.A, B: S.names.B, C: S.names.C, D: S.names.D,
                 gL: S.gL, gR: S.gR
             });
+            
+            // ★追加：各マッチが終わるごとに完了フラグを立ててからLiveへ送信する
+            S.isMatchCompleted = true;
             sendToLive();
 
             if (TS.currentMatchNum >= 3) {
@@ -763,7 +767,7 @@
                 
                 // 次対戦に向けたリセット
                 const prevMaxG = S.maxG; const prevWinG = S.winG;
-                S = getInitialMatchState();
+                S = getInitialMatchState(); // ここでフラグも自動的にfalseに戻ります
                 S.maxG = prevMaxG; S.winG = prevWinG;
                 historyStack = [];
                 

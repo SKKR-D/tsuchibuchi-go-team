@@ -50,6 +50,18 @@
         .g-num { font-family: 'Orbitron', sans-serif; font-size: 1.8rem; font-weight: 900; width: 25px; text-align: center; }
         .p-num { font-family: 'Orbitron', sans-serif; font-size: 1rem; font-weight: bold; color: #ffffff; background: #333; padding: 2px 6px; border-radius: 4px; margin-left: 4px; min-width: 24px; text-align: center; }
         .sep { margin: 0 6px; color: #ccc; font-weight: bold; }
+
+        /* ★終了した団体戦用のグレイスタイル追加 */
+        .m-card.is-finished { border-color: #d1d5db; box-shadow: none; opacity: 0.85; }
+        .m-card.is-finished:hover { transform: none; cursor: default; }
+        .m-card.is-finished .mc-top { background: #6b7280; color: #f3f4f6; }
+        .m-card.is-finished .team-battle-area { background: #f3f4f6; border-bottom-color: #d1d5db;}
+        .m-card.is-finished .tba-wins { color: #6b7280; }
+        .m-card.is-finished .m-players.c-L { color: #4b5563; }
+        .m-card.is-finished .m-players.c-R { color: #4b5563; }
+        .m-card.is-finished .match-row.completed { background: #f9fafb; }
+        .m-card.is-finished .match-row { border-bottom-color: #e5e7eb; }
+        .finished-badge { background: #374151; color: #fff; padding: 2px 8px; border-radius: 12px; font-size: 0.7rem; margin-left: 8px;}
     </style>
 </head>
 <body>
@@ -82,18 +94,26 @@
             const wrap = document.getElementById('grid-wrap');
             const now = Date.now();
             
-            // 団体戦のデータのみを抽出（1時間以内のもの）
+            // 団体戦のデータのみを抽出（過去24時間以内のものを残すよう時間を少し長めに調整）
             let activeMatches = matches.filter(data => {
                 if (!data.lastUpdate || data.type !== 'team_match') return false; 
-                return (now - data.lastUpdate) < (60 * 60 * 1000);
+                return (now - data.lastUpdate) < (24 * 60 * 60 * 1000); 
             });
 
             if (activeMatches.length === 0) {
-                wrap.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: var(--team-bg); font-weight: bold;">現在、進行中の団体戦はありません</div>`;
+                wrap.innerHTML = `<div style="grid-column: 1/-1; text-align: center; padding: 50px; color: var(--team-bg); font-weight: bold;">現在、表示できる団体戦はありません</div>`;
                 return;
             }
 
+            // ★ソートのロジックを変更
+            // 進行中が上、終了した試合は下に配置。同じグループ内ではコート番号順
             activeMatches.sort((a, b) => {
+                const isA_Finished = (a.TS.winsL >= 2 || a.TS.winsR >= 2 || (a.TS.currentMatchNum > a.TS.maxMatch));
+                const isB_Finished = (b.TS.winsL >= 2 || b.TS.winsR >= 2 || (b.TS.currentMatchNum > b.TS.maxMatch));
+                
+                if (isA_Finished && !isB_Finished) return 1;
+                if (!isA_Finished && isB_Finished) return -1;
+                
                 const numA = parseInt(a.S.meta.court.split('_')[1]) || 0;
                 const numB = parseInt(b.S.meta.court.split('_')[1]) || 0;
                 return numA - numB;
@@ -102,17 +122,32 @@
             wrap.innerHTML = activeMatches.map(data => {
                 const TS = data.TS; const S = data.S;
                 const courtName = S.meta.court.split('_')[1] + 'コート';
-                const detailUrl = `live.html?court=${S.meta.court}`;
+                
+                // 団体戦自体の終了判定
+                const isTeamMatchFinished = (TS.winsL >= 2 || TS.winsR >= 2 || (TS.currentMatchNum > TS.maxMatch));
+                
+                // 終了している場合はリンクを無効化し、グレイスタイルを適用
+                const detailUrl = isTeamMatchFinished ? "javascript:void(0)" : `live.html?court=${S.meta.court}`;
+                const cardClass = isTeamMatchFinished ? "m-card is-finished" : "m-card";
+                const badgeHtml = isTeamMatchFinished ? `<span class="finished-badge">終了</span>` : "";
 
                 let html = `
-                <a href="${detailUrl}" class="m-card">
+                <a href="${detailUrl}" class="${cardClass}">
                     <div class="mc-top">
-                        <span>第${courtName}</span>
+                        <span>第${courtName} ${badgeHtml}</span>
                         <span>${TS.meta.tourney || ''} ${TS.meta.stage || ''} (${TS.gender})</span>
                     </div>
                     <div class="team-battle-area">
-                        <div class="tba-names"><span style="color:var(--blue);">${TS.teamL}</span> <span style="color:var(--text-dim);font-size:1rem;">VS</span> <span style="color:var(--red);">${TS.teamR}</span></div>
-                        <div class="tba-wins"><span style="color:var(--blue);">${TS.winsL}</span> <span style="font-size:1.5rem;color:#ccc;vertical-align:middle;">-</span> <span style="color:var(--red);">${TS.winsR}</span></div>
+                        <div class="tba-names">
+                            <span style="color:${isTeamMatchFinished ? 'inherit' : 'var(--blue)'};">${TS.teamL}</span> 
+                            <span style="color:var(--text-dim);font-size:1rem;">VS</span> 
+                            <span style="color:${isTeamMatchFinished ? 'inherit' : 'var(--red)'};">${TS.teamR}</span>
+                        </div>
+                        <div class="tba-wins">
+                            <span style="color:${isTeamMatchFinished ? 'inherit' : 'var(--blue)'};">${TS.winsL}</span> 
+                            <span style="font-size:1.5rem;color:#ccc;vertical-align:middle;">-</span> 
+                            <span style="color:${isTeamMatchFinished ? 'inherit' : 'var(--red)'};">${TS.winsR}</span>
+                        </div>
                     </div>
                     <div class="match-list">
                 `;
@@ -120,8 +155,10 @@
                 // 第1〜第3マッチの描画ループ
                 for (let i = 0; i < TS.maxMatch; i++) {
                     const matchNum = i + 1;
-                    const isCompleted = matchNum < TS.currentMatchNum;
-                    const isActive = matchNum === TS.currentMatchNum;
+                    
+                    // 終了している試合は全てcompleted扱いにする
+                    const isCompleted = isTeamMatchFinished ? true : (matchNum < TS.currentMatchNum);
+                    const isActive = isTeamMatchFinished ? false : (matchNum === TS.currentMatchNum);
                     
                     let order = TS.matchOrders[i] || {A:'-', B:'-', C:'-', D:'-'};
                     let pL = `${order.A || '-'}<br>${order.B || '-'}`;
@@ -129,12 +166,15 @@
 
                     if (isCompleted) {
                         const res = TS.matchResults[i] || { gL: 0, gR: 0, A: order.A, B: order.B, C: order.C, D: order.D };
+                        // まだ試合が行われていなかった（2勝0敗で打ち切りなど）場合はスコアを「-」にする
+                        const scoreDisplay = (res.gL === 0 && res.gR === 0 && (res.A === '-' || !res.A)) ? "- : -" : `${res.gL} - ${res.gR}`;
+                        
                         html += `
                         <div class="match-row completed">
                             <div class="match-title">第${matchNum}マッチ <span style="background:#e0e0e0;padding:2px 6px;border-radius:4px;color:#555;">決着</span></div>
                             <div class="match-content">
                                 <div class="m-players c-L">${res.A}<br>${res.B}</div>
-                                <div class="m-score">${res.gL} - ${res.gR}</div>
+                                <div class="m-score">${scoreDisplay}</div>
                                 <div class="m-players c-R">${res.C}<br>${res.D}</div>
                             </div>
                         </div>`;
