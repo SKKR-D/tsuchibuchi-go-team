@@ -289,11 +289,17 @@
                 <div class="point-display" id="pt-L">0</div>
                 <div class="players-box">
                     <div class="p-row" id="row-A">
-                        <div class="p-info"><span class="p-role" id="role-A"></span><input class="p-name-input" id="nm-A" readonly></div>
+                        <div class="p-info">
+                            <span class="p-role" id="role-A"></span>
+                            <select class="p-name-input" id="nm-A" onchange="updateName('player','A',this.value)"></select>
+                        </div>
                         <div class="p-btns"><button class="act-btn btn-p" onclick="act('L','A','p')">ポイント</button><button class="act-btn btn-m" onclick="act('L','A','m')">ミス</button></div>
                     </div>
                     <div class="p-row" id="row-B">
-                        <div class="p-info"><span class="p-role" id="role-B"></span><input class="p-name-input" id="nm-B" readonly></div>
+                        <div class="p-info">
+                            <span class="p-role" id="role-B"></span>
+                            <select class="p-name-input" id="nm-B" onchange="updateName('player','B',this.value)"></select>
+                        </div>
                         <div class="p-btns"><button class="act-btn btn-p" onclick="act('L','B','p')">ポイント</button><button class="act-btn btn-m" onclick="act('L','B','m')">ミス</button></div>
                     </div>
                 </div>
@@ -378,7 +384,7 @@
                 names: { A: '選手A', B: '選手B', C: '選手C', D: '選手D' },
                 stats: { A: { p:0, m:0, fi:0, st:0, pt:{}, mt:{} }, B: { p:0, m:0, fi:0, st:0, pt:{}, mt:{} }, C: { p:0, m:0, fi:0, st:0, pt:{}, mt:{} }, D: { p:0, m:0, fi:0, st:0, pt:{}, mt:{} } },
                 hist: [], log: [],
-                isMatchCompleted: false // ★追加：マッチ完了フラグ
+                isMatchCompleted: false
             };
         }
 
@@ -396,10 +402,16 @@
         function updateRoster() {
             const list = ROSTER[TS.gender] || [];
             const html = `<option value="">-- 選択 --</option>` + list.map(n => `<option value="${n}">${n}</option>`).join('');
+            
+            // 初期設定画面のプルダウン更新
             for(let i=1; i<=3; i++) {
                 document.getElementById(`o${i}-A`).innerHTML = html;
                 document.getElementById(`o${i}-B`).innerHTML = html;
             }
+            
+            // ★メイン画面（スコア入力画面）のプルダウンも更新
+            document.getElementById('nm-A').innerHTML = html;
+            document.getElementById('nm-B').innerHTML = html;
         }
 
         function selMatch(n) {
@@ -514,7 +526,18 @@
             if(document.getElementById('pos-match-num')) document.getElementById('pos-match-num').textContent = TS.currentMatchNum;
         }
 
-        function updateName(type, id, val) { S.names[id] = val; update(); }
+        // ★ メイン画面のプルダウン等で選手名が変更された時の処理
+        function updateName(type, id, val) { 
+            S.names[id] = val;
+            
+            // マスターのTS(団体データ)側も書き換えて、ダッシュボード等にも反映されるようにする
+            if(type === 'player' && (id === 'A' || id === 'B' || id === 'C' || id === 'D')) {
+                TS.matchOrders[TS.currentMatchNum - 1][id] = val;
+            }
+            
+            update(); 
+            sendToLive(); // 変更を即座にライブに反映
+        }
 
         // --- ゲームロジック ---
         function getServ() {
@@ -753,7 +776,7 @@
                 gL: S.gL, gR: S.gR
             });
             
-            // ★追加：各マッチが終わるごとに完了フラグを立ててからLiveへ送信する
+            // 各マッチが終わるごとに完了フラグを立ててからLiveへ送信する
             S.isMatchCompleted = true;
             sendToLive();
 
@@ -775,6 +798,10 @@
                 const o = TS.matchOrders[TS.currentMatchNum - 1];
                 S.names.A = o.A || '選手A'; S.names.B = o.B || '選手B';
                 S.names.C = o.C || '選手C'; S.names.D = o.D || '選手D';
+                
+                // メイン画面のプルダウンにも反映
+                document.getElementById('nm-A').value = S.names.A;
+                document.getElementById('nm-B').value = S.names.B;
                 
                 // UIリセット
                 document.getElementById('btn-send-record').innerHTML = "☁ スコアを送信する"; 
