@@ -3,115 +3,116 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>【団体戦】ライブスコア詳細</title>
+    <title>【土淵中】ライブ詳細</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@700;900&family=Noto+Sans+JP:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700;900&family=Roboto+Mono:wght@700;900&display=swap" rel="stylesheet">
     <style>
-        :root { --team-bg: #1b5e20; --team-gold: #fbc02d; --bg: #2e7d32; --surface: #ffffff; --surface2: #f1f8e9; --border: #c8e6c9; --text: #1a1a1a; --text-dim: #555555; --blue: #1976d2; --red: #d32f2f; }
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); color: var(--text); display: flex; flex-direction: column; align-items: center; min-height: 100vh; }
-        .scoreboard { width: 100%; max-width: 600px; background: var(--surface); min-height: 100vh; display: flex; flex-direction: column; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
+        :root { --team-bg: #1b5e20; --team-gold: #fbc02d; --bg: #2e7d32; --surface: #ffffff; --border: #c8e6c9; --blue: #1976d2; --red: #d32f2f; }
+        body { font-family: 'Noto Sans JP', sans-serif; background: var(--bg); margin: 0; display: flex; justify-content: center; }
+        .scoreboard { width: 100%; max-width: 600px; background: var(--surface); min-height: 100vh; display: flex; flex-direction: column; }
+        .back-dash-btn { background: var(--team-bg); color: #fff; padding: 12px; text-align:center; text-decoration: none; font-weight:bold; }
+        .team-board { padding: 25px 15px 15px 15px; text-align: center; background: #f1f8e9; }
+        .tb-wins { font-family: 'Roboto Mono', monospace; font-size: 3.5rem; font-weight: 900; color: var(--blue); line-height: 1.2; }
+        .gc-score { font-family: 'Roboto Mono', monospace; font-size: 3.5rem; font-weight: 900; }
+        .pt-box { width: 100px; aspect-ratio: 3/4; border: 4px solid var(--border); display: flex; justify-content: center; align-items: center; font-family: 'Roboto Mono', monospace; font-size: 5rem; font-weight: 900; border-radius: 10px; }
         
-        .back-dash-btn { display: flex; justify-content: center; align-items: center; background: var(--team-bg); color: #fff; padding: 12px; font-weight: bold; text-decoration: none; border-bottom: 3px solid var(--team-gold); font-size: 0.9rem; }
-        
-        .team-board { background: var(--surface2); padding: 25px 15px; text-align: center; border-bottom: 4px solid var(--team-gold); }
-        .tb-title { display: inline-block; background: var(--team-gold); color: #000; padding: 4px 12px; border-radius: 20px; font-weight: 900; font-size: 0.8rem; margin-bottom: 10px; }
-        .tb-teams { font-size: 1.6rem; font-weight: 900; display: flex; justify-content: space-around; }
-        .tb-wins { font-family: 'Orbitron', sans-serif; font-size: 4rem; font-weight: 900; margin-top: 10px; line-height: 1; color: var(--blue); }
-
-        .current-match-header { background: var(--team-bg); color: var(--team-gold); padding: 10px; text-align: center; font-weight: 900; font-size: 1rem; }
-        
-        .game-count-area { display: flex; padding: 20px 10px; background: var(--surface); align-items: center; justify-content: space-between; border-bottom: 2px solid var(--border); }
-        .gc-team { flex: 1; display: flex; flex-direction: column; align-items: center; }
-        .gc-name { font-size: 1.1rem; font-weight: 900; margin-bottom: 5px; text-align: center; line-height: 1.4; }
-        .gc-score { font-family: 'Orbitron', sans-serif; font-size: 3.5rem; font-weight: 900; }
-        .color-L { color: var(--blue); } .color-R { color: var(--red); }
-        
-        .points-wrapper { background: #fafafa; padding: 25px 10px; display: flex; justify-content: center; border-bottom: 2px solid var(--border); }
-        .pt-box { width: 100px; aspect-ratio: 3/4; background: var(--surface); border-radius: 12px; display: flex; justify-content: center; align-items: center; font-family: 'Helvetica World', Helvetica, sans-serif; font-size: 5rem; font-weight: 900; border: 4px solid var(--border); box-shadow: inset 0 4px 10px rgba(0,0,0,0.05); }
-        .pt-box.box-L { color: var(--blue); border-color: var(--blue); } .pt-box.box-R { color: var(--red); border-color: var(--red); }
-        .pt-divider { font-size: 2.5rem; margin: 0 15px; align-self: center; font-weight: bold; color: var(--border); }
+        .order-table-wrap { padding: 10px; background: #ffffff; border-bottom: 3px solid var(--team-gold); }
+        .order-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        .order-table td { padding: 8px 4px; border-bottom: 1px dashed #eee; text-align: center; vertical-align: middle; }
+        .ol-name-L { font-weight: bold; color: var(--blue); width: 40%; text-align: left; padding-left: 10px; line-height: 1.2;}
+        .ol-name-R { font-weight: bold; color: var(--red); width: 40%; text-align: right; padding-right: 10px; line-height: 1.2;}
+        .ol-score { font-weight: 900; width: 20%; background: #f9f9f9; }
     </style>
 </head>
 <body>
     <div class="scoreboard">
-        <a href="dashboard.html" class="back-dash-btn">🔙 団体戦ダッシュボードに戻る</a>
-        <div id="loading" style="padding: 50px; text-align: center; font-weight: bold; color: var(--team-bg);">データを取得中...</div>
-
-        <div id="main-content" style="display: none; flex-direction: column; flex: 1;">
+        <a href="dashboard.html" class="back-dash-btn">ダッシュボードに戻る</a>
+        <div id="main-content">
             <div class="team-board">
-                <div class="tb-title" id="v-tourney">大会情報</div>
-                <div class="tb-teams">
-                    <span class="color-L" id="v-teamL">土淵中</span> <span style="color:var(--text-dim); font-size:1.2rem; align-self:center;">vs</span> <span class="color-R" id="v-teamR">相手</span>
-                </div>
-                <div class="tb-wins"><span class="color-L" id="v-winL">0</span> <span style="color:var(--border); font-size:2.5rem; vertical-align:middle;">-</span> <span class="color-R" id="v-winR">0</span></div>
+                <div id="v-tourney" style="background:var(--team-gold); display:inline-block; padding:2px 10px; border-radius:15px; font-size:0.8rem; font-weight:bold;">大会情報</div>
+                <div style="font-size:1.6rem; font-weight:900; margin-top:10px;"><span id="v-teamL" style="color:var(--blue)">土淵中</span> VS <span id="v-teamR" style="color:var(--red)">相手</span></div>
+                <div class="tb-wins"><span id="v-winL">0</span> - <span id="v-winR">0</span></div>
+            </div>
+            
+            <div class="order-table-wrap">
+                <div style="font-size:0.75rem; font-weight:bold; text-align:center; color:#666; margin-bottom:5px;">📋 団体戦オーダー</div>
+                <table class="order-table">
+                    <tr><td class="ol-name-L" id="ol-L1">-</td><td class="ol-score" id="ol-S1">M1</td><td class="ol-name-R" id="ol-R1">-</td></tr>
+                    <tr><td class="ol-name-L" id="ol-L2">-</td><td class="ol-score" id="ol-S2">M2</td><td class="ol-name-R" id="ol-R2">-</td></tr>
+                    <tr style="border:none;"><td class="ol-name-L" id="ol-L3">-</td><td class="ol-score" id="ol-S3">M3</td><td class="ol-name-R" id="ol-R3">-</td></tr>
+                </table>
             </div>
 
-            <div class="current-match-header">▶ 第<span id="v-matchNum">1</span>マッチ 進行中</div>
-
-            <div class="game-count-area">
-                <div class="gc-team"><div class="gc-name color-L" id="v-pairL">ペアA<br>ペアB</div><div class="gc-score color-L" id="v-gL">0</div></div>
-                <div style="font-weight:900; color:var(--text-dim); text-align:center;">
-                    <div id="v-game-num" style="color:var(--team-gold); background:var(--team-bg); padding:2px 8px; border-radius:4px; margin-bottom:5px; font-size:0.8rem;">1ゲーム目</div>
-                    GAME
-                </div>
-                <div class="gc-team"><div class="gc-name color-R" id="v-pairR">ペアC<br>ペアD</div><div class="gc-score color-R" id="v-gR">0</div></div>
+            <div style="display:flex; padding:15px 20px; justify-content:space-between; align-items:center; border-bottom:1px solid #eee;">
+                <div style="text-align:center; flex:1;"><div id="v-pairL" style="font-weight:bold; color:var(--blue);"></div><div class="gc-score" id="v-gL" style="color:var(--blue);">0</div></div>
+                <div style="font-weight:bold; background:var(--team-bg); color:#fff; padding:4px 8px; border-radius:5px; font-size:0.8rem;" id="v-game-num">GAME</div>
+                <div style="text-align:center; flex:1;"><div id="v-pairR" style="font-weight:bold; color:var(--red);"></div><div class="gc-score" id="v-gR" style="color:var(--red);">0</div></div>
             </div>
-
-            <div class="points-wrapper">
-                <div class="pt-box box-L" id="v-pL">0</div>
-                <div class="pt-divider">-</div>
-                <div class="pt-box box-R" id="v-pR">0</div>
+            <div style="padding:30px; display:flex; justify-content:center; align-items:center; background:#fafafa;">
+                <div class="pt-box" id="v-pL" style="color:var(--blue);">0</div>
+                <div style="font-family:'Roboto Mono', monospace; font-size:3rem; margin:0 20px; color:#ccc;">-</div>
+                <div class="pt-box" id="v-pR" style="color:var(--red);">0</div>
             </div>
-            <div style="padding: 15px; text-align: center; font-size: 0.85rem; color: var(--text-dim); font-weight:bold; background: var(--surface2);">● 3秒間隔で自動更新中...</div>
+            <div style="text-align:center; padding:15px; font-weight:900; color:var(--team-bg);">がんばれ土淵中</div>
         </div>
     </div>
-
     <script>
-        // ★ユーザー指定の正しいライブ用GASのURL
         const GAS_URL_LIVE = "https://script.google.com/macros/s/AKfycbzi-0SNXjjv5mOfuU7X6Zs5Id7fzhTHPGihZ1w-N58TE5-axZKe7AFfhxd3T7gI0VMqBw/exec";
         const urlParams = new URLSearchParams(window.location.search);
-        const targetCourt = urlParams.get('court') || 'court_1';
-
-        window.onload = () => { fetchScore(); setInterval(fetchScore, 3000); };
-
-        async function fetchScore() {
-            try {
-                const res = await fetch(`${GAS_URL_LIVE}?court=${targetCourt}`);
-                const data = await res.json();
-                
-                if (data.type === 'team_match' && data.TS && data.S) {
-                    render(data.TS, data.S);
-                } else {
-                    document.getElementById('loading').textContent = "このコートでは現在、団体戦は行われていません。";
-                }
-            } catch (e) { console.error(e); }
-        }
-
+        const court = urlParams.get('court');
+        
+        window.onload = () => { setInterval(fetchScore, 3000); fetchScore(); };
+        
         function getDisp(l, r, fin) { const border = fin ? 6 : 3; if (l < border || r < border) return { l, r }; if (l === r) return { l: 'D', r: 'D' }; if (l > r) return { l: 'A', r: 'D' }; return { l: 'D', r: 'A' }; }
 
-        function render(TS, S) {
-            document.getElementById('loading').style.display = 'none';
-            document.getElementById('main-content').style.display = 'flex';
+        function fetchScore() { 
+            if(!court) return;
+            fetch(`${GAS_URL_LIVE}?court=${court}`).then(r => r.json()).then(data => {
+                if(!data.TS) return;
+                
+                document.getElementById('v-tourney').textContent = data.TS.meta.tourney || '大会情報';
+                document.getElementById('v-teamL').textContent = data.TS.teamL; document.getElementById('v-teamR').textContent = data.TS.teamR;
+                document.getElementById('v-winL').textContent = data.TS.winsL; document.getElementById('v-winR').textContent = data.TS.winsR;
+                document.getElementById('v-pairL').innerHTML = `${data.S.names.A}<br>${data.S.names.B}`; document.getElementById('v-pairR').innerHTML = `${data.S.names.C}<br>${data.S.names.D}`;
+                document.getElementById('v-gL').textContent = data.S.gL; document.getElementById('v-gR').textContent = data.S.gR;
+                
+                const d = getDisp(data.S.pL, data.S.pR, data.S.isFinal);
+                document.getElementById('v-pL').textContent = d.l; document.getElementById('v-pR').textContent = d.r;
+                document.getElementById('v-game-num').textContent = data.S.isFinal ? "ファイナル" : `第${data.S.gL+data.S.gR+1}G`;
 
-            const cName = S.meta.court.split('_')[1] + 'コート';
-            document.getElementById('v-tourney').textContent = `[第${cName}] ${TS.meta.tourney || ''} ${TS.meta.stage || ''}`;
-            
-            document.getElementById('v-teamL').textContent = TS.teamL;
-            document.getElementById('v-teamR').textContent = TS.teamR;
-            document.getElementById('v-winL').textContent = TS.winsL;
-            document.getElementById('v-winR').textContent = TS.winsR;
-            document.getElementById('v-matchNum').textContent = TS.currentMatchNum;
-
-            document.getElementById('v-pairL').innerHTML = `${S.names.A}<br>${S.names.B}`;
-            document.getElementById('v-pairR').innerHTML = `${S.names.C}<br>${S.names.D}`;
-            document.getElementById('v-gL').textContent = S.gL;
-            document.getElementById('v-gR').textContent = S.gR;
-            document.getElementById('v-game-num').textContent = S.isFinal ? "ファイナル" : `第${S.gL + S.gR + 1}G`;
-
-            const d = getDisp(S.pL, S.pR, S.isFinal);
-            document.getElementById('v-pL').textContent = d.l;
-            document.getElementById('v-pR').textContent = d.r;
+                for(let i=0; i<3; i++) {
+                    const order = (data.TS.matchOrders && data.TS.matchOrders[i]) ? data.TS.matchOrders[i] : {A:'',B:'',C:'',D:''};
+                    const res = data.TS.matchResults && data.TS.matchResults[i];
+                    
+                    let pA = order.A || '-'; let pB = order.B || '-';
+                    let pC = order.C || '-'; let pD = order.D || '-';
+                    
+                    let pL = `${pA}<br><span style="font-size:0.7rem;">${pB}</span>`;
+                    let pR = `${pC}<br><span style="font-size:0.7rem;">${pD}</span>`;
+                    let scoreText = `第${i+1}M`;
+                    let opacity = "1";
+                    
+                    if(res) {
+                        pL = `${res.A}<br><span style="font-size:0.7rem;">${res.B}</span>`;
+                        pR = `${res.C}<br><span style="font-size:0.7rem;">${res.D}</span>`;
+                        scoreText = `<span style="font-family:'Roboto Mono', monospace; font-size:1.1rem; color:#666;">${res.gL} - ${res.gR}</span>`;
+                        opacity = "0.4"; 
+                    } else if (data.TS.currentMatchNum === (i+1) && !data.S.isMatchCompleted) {
+                        pL = `${data.S.names.A}<br><span style="font-size:0.7rem;">${data.S.names.B}</span>`;
+                        pR = `${data.S.names.C}<br><span style="font-size:0.7rem;">${data.S.names.D}</span>`;
+                        scoreText = `<span style="color:#1b5e20; font-size:0.7rem; background:#c8e6c9; padding:2px 4px; border-radius:4px;">LIVE</span>`;
+                    } else {
+                        scoreText = `<span style="color:#999; font-size:0.7rem;">待機中</span>`;
+                        opacity = "0.7";
+                    }
+                    
+                    document.getElementById(`ol-L${i+1}`).innerHTML = pL;
+                    document.getElementById(`ol-L${i+1}`).style.opacity = opacity;
+                    document.getElementById(`ol-R${i+1}`).innerHTML = pR;
+                    document.getElementById(`ol-R${i+1}`).style.opacity = opacity;
+                    document.getElementById(`ol-S${i+1}`).innerHTML = scoreText;
+                }
+            }); 
         }
     </script>
 </body>
