@@ -138,7 +138,10 @@
                 <div class="order-box">
                     <div class="order-title" style="display:flex; justify-content:space-between; align-items:center;">
                         <span>第3マッチ</span>
-                        <label style="font-size:0.75rem; color:#d32f2f; cursor:pointer;"><input type="checkbox" id="o3-op"> オープン参加(不戦敗)</label>
+                        <div style="display:flex; gap:10px;">
+                            <label style="font-size:0.75rem; color:var(--blue); cursor:pointer;"><input type="checkbox" id="o3-op-L"> 土淵中OP</label>
+                            <label style="font-size:0.75rem; color:var(--red); cursor:pointer;"><input type="checkbox" id="o3-op-R"> 相手OP</label>
+                        </div>
                     </div>
                     <div class="order-row"><select id="o3-A"></select><select id="o3-B"></select></div>
                     <div class="order-vs">VS</div>
@@ -405,17 +408,25 @@
             for(let i=1; i<=3; i++) { 
                 let pA = document.getElementById(`o${i}-A`).value;
                 let pB = document.getElementById(`o${i}-B`).value;
+                let pC = document.getElementById(`o${i}-C`).value;
+                let pD = document.getElementById(`o${i}-D`).value;
 
-                if (i === 3 && document.getElementById('o3-op') && document.getElementById('o3-op').checked) {
-                    if (pA) pA += '(OP)';
-                    if (pB) pB += '(OP)';
+                if (i === 3) {
+                    if (document.getElementById('o3-op-L') && document.getElementById('o3-op-L').checked) {
+                        pA = pA ? pA + '(OP)' : '(OP)';
+                        pB = pB ? pB + '(OP)' : '(OP)';
+                    }
+                    if (document.getElementById('o3-op-R') && document.getElementById('o3-op-R').checked) {
+                        pC = pC ? pC + '(OP)' : '(OP)';
+                        pD = pD ? pD + '(OP)' : '(OP)';
+                    }
                 }
 
                 TS.matchOrders[i-1] = { 
                     A: pA, 
                     B: pB, 
-                    C: document.getElementById(`o${i}-C`).value, 
-                    D: document.getElementById(`o${i}-D`).value 
+                    C: pC, 
+                    D: pD 
                 }; 
             }
 
